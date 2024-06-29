@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Ashmit's Pool game</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <style>
+        body {
+            text-align: center;
+            background-color: blue;
+        }
+
+        h1 {
+            font-size: 96px;
+        }
+
+        h2 {
+            font-size: 48px;
+        }
+
+        .game-Container {
+            position: relative;
+            width: 700px;
+            height: 1375px;
+            margin: auto;
+            border: 2px solid #9f1818;
+        }
+
+        svg {
+            cursor: crosshair;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Style for form elements */
+        #playerNamesForm {
+            margin-top: 20px;
+        }
+
+        #player1Name,
+        #player2Name,
+        input[type="submit"] {
+            font-size: 18px;
+            padding: 10px;
+            margin-bottom: 10px;
+            width: 300px; /* Adjust width as needed */
+        }
+    </style>
+</head>
+
+<body>
+    <h1><u>Ashmit's Pool Game!</u></h1>
+    <h2>The Number one Billiards Game in town!</h2>
+    <div class="game-Container">
+        <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+            "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+        <svg id="IDContainer" width="700" height="1375" viewBox="-25 -25 1400 2750" xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink">
+            <rect width="1350" height="2700" x="0" y="0" fill="#C0D0C0" />
+            <rect width="1400" height="25" x="-25" y="-25" fill="darkgreen" />
+            <rect width="1400" height="25" x="-25" y="2700" fill="darkgreen" />
+            <rect width="25" height="2750" x="-25" y="-25" fill="darkgreen" />
+            <rect width="25" height="2750" x="1350" y="-25" fill="darkgreen" />
+            <circle cx="0" cy="0" r="114" fill="black" />
+            <circle cx="0" cy="1350" r="114" fill="black" />
+            <circle cx="0" cy="2700" r="114" fill="black" />
+            <circle cx="1350" cy="0" r="114" fill="black" />
+            <circle cx="1350" cy="1350" r="114" fill="black" />
+            <circle cx="1350" cy="2700" r="114" fill="black" />
+            <circle cx="675" cy="675" r="28" fill="yellow" />
+            <circle cx="644" cy="622" r="28" fill="blue" />
+            <circle cx="705" cy="620" r="28" fill="red" />
+            <circle id="ballcue" cx="672" cy="2025" r="28" fill="white" />
+            <line id="lineShot" x1="672" y1="2025" x2="672" y2="2025" stroke="black" stroke-width="5"
+                visibility="hidden" />
+        </svg>
+    </div>
+
+    <!-- Form to enter player names -->
+    <form id="playerNamesForm" action="/newIndex" method="post">
+        <label for="player1Name">Player 1 Name:</label><br>
+        <input type="text" id="player1Name" name="player1Name"><br><br>
+        <label for="player2Name">Player 2 Name:</label><br>
+        <input type="text" id="player2Name" name="player2Name"><br><br>
+        <input type="submit" value="Start Game">
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const ballcue = document.getElementById('ballcue');
+            const lineShot = document.getElementById('lineShot');
+            let isDragging = false;
+            let startPoint = null;
+
+            ballcue.addEventListener('mousedown', (evt) => {
+                const point = getSVGPoint(evt);
+                startPoint = point;
+                isDragging = true;
+                lineShot.setAttribute('visibility', 'visible');
+                lineShot.setAttribute('x1', point.x);
+                lineShot.setAttribute('y1', point.y);
+                lineShot.setAttribute('x2', point.x);
+                lineShot.setAttribute('y2', point.y);
+            });
+
+            document.addEventListener('mousemove', (evt) => {
+                if (isDragging) {
+                    const point = getSVGPoint(evt);
+                    lineShot.setAttribute('x2', point.x);
+                    lineShot.setAttribute('y2', point.y);
+                }
+            });
+
+            document.addEventListener('mouseup', (evt) => {
+                const svg = document.querySelector('svg');
+                const rect = svg.getBoundingClientRect();
+                const xCue = 672; // X coordinate of the cue ball
+                const yCue = 2025; // Y coordinate of the cue ball
+                const xPositionFinal = evt.clientX - rect.left; // X coordinate of the mouse pointer relative to the SVG
+                const yPositionFinal = evt.clientY - rect.top; // Y coordinate of the mouse pointer relative to the SVG
+
+                if (isDragging) {
+                    isDragging = false;
+                    lineShot.setAttribute('visibility', 'hidden');
+
+                    var xVelocityValue = xPositionFinal - xCue;
+                    var yVelocityValue = yPositionFinal - yCue;
+
+                    const totalVelocity = Math.sqrt(xVelocityValue * xVelocityValue + yVelocityValue * yVelocityValue);
+
+                    const maximum = 123;
+
+                    var totalValue = 10000 * totalVelocity / maximum;
+
+                    if (totalValue > 10000) {
+                        totalValue = 10000;
+                    }
+
+                    xVelocityValue = totalValue * (xVelocityValue / totalVelocity);
+                    yVelocityValue = totalValue * (yVelocityValue / totalVelocity);
+
+                    $.post("newIndex", {
+                            xVelocityValue: xVelocityValue,
+                            yVelocityValue: yVelocityValue,
+                            xCue: xCue,
+                            yCue: yCue,
+                            player1Name: document.getElementById('player1Name').value,
+                            player2Name: document.getElementById('player2Name').value
+                        },
+                        function (data, status) {
+                            alert("Data: " + data + "\nStatus: " + status);
+                        });
+                }
+            });
+
+            function getSVGPoint(evt) {
+                const svg = document.querySelector('svg');
+                const point = svg.createSVGPoint();
+                point.x = evt.clientX;
+                point.y = evt.clientY;
+                return point.matrixTransform(svg.getScreenCTM().inverse());
+            }
+        });
+    </script>
+</body>
+
+</html>
+
