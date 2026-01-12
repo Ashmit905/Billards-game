@@ -4,3 +4,5 @@ Created a Dynamic 8-pool Game using HTML/CSS along with elements of JQuery in or
 
 
 Instructions to run:
+
+Step 1:
